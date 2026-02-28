@@ -11,10 +11,12 @@ export async function GET() {
       id: user.id,
       name: user.name,
       email: user.email,
+      selectedDomain: user.selectedDomain,
       currentDay: user.currentDay,
       currentStreak: user.currentStreak,
       longestStreak: user.longestStreak,
       joinedAt: user.joinedAt,
+      role: user.role,
     },
   });
 }

@@ -17,6 +17,13 @@ export async function GET(
   if (!problem) {
     return NextResponse.json({ error: "Problem not found" }, { status: 404 });
   }
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { selectedDomain: true, role: true },
+  });
+  if (user && user.role !== "ADMIN" && user.selectedDomain !== problem.domain) {
+    return NextResponse.json({ error: "Problem not found" }, { status: 404 });
+  }
   const solved = await prisma.submission.findFirst({
     where: { userId: session.userId, problemId: id },
   });

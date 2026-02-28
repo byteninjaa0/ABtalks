@@ -7,10 +7,17 @@ export async function GET(request: Request) {
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { selectedDomain: true },
+  });
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
   const { searchParams } = new URL(request.url);
   const difficulty = searchParams.get("difficulty");
   const category = searchParams.get("category");
-  const where: { difficulty?: string; category?: string } = {};
+  const where: { difficulty?: string; category?: string; domain: "SE" | "ML" | "AI" } = { domain: user.selectedDomain };
   if (difficulty) where.difficulty = difficulty;
   if (category) where.category = category;
   const problems = await prisma.problem.findMany({

@@ -9,12 +9,13 @@ export async function GET() {
   }
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { currentDay: true },
+    select: { currentDay: true, selectedDomain: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
   const challenges = await prisma.challenge.findMany({
+    where: { domain: user.selectedDomain },
     orderBy: { dayNumber: "asc" },
   });
   const solvedDayNumbers = new Set(

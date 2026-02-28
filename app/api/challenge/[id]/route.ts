@@ -19,10 +19,13 @@ export async function GET(
   }
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { currentDay: true },
+    select: { currentDay: true, selectedDomain: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
+  }
+  if (challenge.domain !== user.selectedDomain) {
+    return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
   }
   const unlocked = challenge.dayNumber <= user.currentDay;
   const solved = await prisma.submission.findFirst({

@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -11,8 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { getDifficultyBgColor } from "@/lib/utils";
+import { useIsAdmin } from "@/lib/user-context";
 
 type Problem = {
   id: string;
@@ -31,11 +31,30 @@ const CATEGORIES = [
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
 export default function ProblemsPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const isAdmin = useIsAdmin();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [difficulty, setDifficulty] = useState(searchParams.get("difficulty") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
+
+  async function handleDelete(id: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Delete this problem?")) return;
+    try {
+      const res = await fetch(`/api/admin/problems/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Could not delete");
+      }
+      setProblems((prev) => prev.filter((p) => p.id !== id));
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not delete");
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -53,10 +72,19 @@ export default function ProblemsPage() {
 
   return (
     <div className="p-8">
-      <h1 className="mb-2 text-3xl font-bold">Problems</h1>
-      <p className="mb-6 text-muted-foreground">
-        Practice by category and difficulty. Separate from the 60-day track.
-      </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">Problems</h1>
+          <p className="text-muted-foreground">
+            Practice by category and difficulty. Separate from the 60-day track.
+          </p>
+        </div>
+        {isAdmin && (
+          <Button asChild>
+            <Link href="/admin/problems">Add Problem</Link>
+          </Button>
+        )}
+      </div>
       <div className="mb-6 flex flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Difficulty:</span>
@@ -93,7 +121,19 @@ export default function ProblemsPage() {
             <Card key={p.id}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg">{p.title}</CardTitle>
-                {p.solved && <Check className="h-5 w-5 text-green-500" />}
+                <div className="flex items-center gap-2">
+                  {p.solved && <Check className="h-5 w-5 text-green-500" />}
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDelete(p.id, e)}
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="mb-2 line-clamp-2 text-sm text-muted-foreground">

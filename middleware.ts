@@ -7,7 +7,7 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 const COOKIE_NAME = "abtalks-token";
 
-const protectedPaths = ["/dashboard", "/challenge", "/problems", "/profile"];
+const protectedPaths = ["/dashboard", "/challenge", "/problems", "/profile", "/events", "/podcasts"];
 const authPaths = ["/login", "/register"];
 
 type JwtPayload = {
@@ -65,6 +65,8 @@ export const config = {
     "/challenge/:path*",
     "/problems/:path*",
     "/profile/:path*",
+    "/events/:path*",
+    "/podcasts/:path*",
     "/admin/:path*",
     "/login",
     "/register",

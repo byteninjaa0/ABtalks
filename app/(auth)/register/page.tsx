@@ -20,6 +20,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedDomain, setSelectedDomain] = useState<"SE" | "ML" | "AI">("SE");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +32,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, selectedDomain }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -89,6 +90,20 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="domain">Select Your Primary Domain</Label>
+            <select
+              id="domain"
+              value={selectedDomain}
+              onChange={(e) => setSelectedDomain(e.target.value as "SE" | "ML" | "AI")}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="SE">Software Engineering (SE)</option>
+              <option value="ML">Machine Learning (ML)</option>
+              <option value="AI">Artificial Intelligence (AI)</option>
+            </select>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">

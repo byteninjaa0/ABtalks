@@ -8,6 +8,8 @@ import {
   FileCode,
   User,
   LogOut,
+  CalendarDays,
+  Mic2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,8 @@ const items = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/challenge", label: "60-Day Challenge", icon: Calendar },
   { href: "/problems", label: "Problems", icon: FileCode },
+  { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/podcasts", label: "Podcasts", icon: Mic2 },
   { href: "/profile", label: "Profile", icon: User },
 ];
 

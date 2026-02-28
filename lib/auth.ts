@@ -5,7 +5,9 @@ import { prisma } from "./db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default-secret-change-me";
 const COOKIE_NAME = "abtalks-token";
-const MAX_AGE = 60 * 60 * 24 * 7;
+// JWT expiry: 1 hour in seconds; override with JWT_EXPIRY env (e.g. 3600 or 604800 for 7d)
+const JWT_EXPIRY_SECONDS = process.env.JWT_EXPIRY ? Number(process.env.JWT_EXPIRY) : 60 * 60; // 1h default
+const MAX_AGE = 60 * 60; // 1 hour cookie; refresh token flow can extend session
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -25,7 +27,7 @@ type JwtPayload = {
 };
 
 export function createToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY_SECONDS });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
@@ -73,6 +75,7 @@ export async function getCurrentUser() {
       id: true,
       name: true,
       email: true,
+      selectedDomain: true,
       currentDay: true,
       currentStreak: true,
       longestStreak: true,

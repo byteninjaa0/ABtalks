@@ -27,8 +27,9 @@ function getYouTubeEmbedUrl(youtubeUrl: string): string | null {
 }
 
 export default async function PodcastDetailPage({ params }: Props) {
+  const { id } = params;
   const episode = await prisma.podcast.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!episode) {
@@ -38,8 +39,8 @@ export default async function PodcastDetailPage({ params }: Props) {
   const embedUrl = getYouTubeEmbedUrl(episode.youtubeUrl);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-10 md:py-12">
+    <div className="p-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8">
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
             Podcast episode
@@ -143,4 +144,3 @@ export default async function PodcastDetailPage({ params }: Props) {
     </div>
   );
 }
-

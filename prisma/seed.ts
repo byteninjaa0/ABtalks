@@ -2,21 +2,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const CATEGORIES = [
-  "Software Engineering",
-  "Machine Learning",
-  "Artificial Intelligence",
-];
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+type Domain = "SE" | "ML" | "AI";
+
+const DOMAINS: Domain[] = ["SE", "ML", "AI"];
+const CATEGORIES: Record<Domain, string> = {
+  SE: "Software Engineering",
+  ML: "Machine Learning",
+  AI: "Artificial Intelligence",
+};
 
 function getDifficulty(day: number): string {
   if (day <= 20) return "Easy";
   if (day <= 40) return "Medium";
   return "Hard";
-}
-
-function getCategory(day: number): string {
-  return CATEGORIES[(day - 1) % 3];
 }
 
 const CHALLENGE_TITLES: Record<number, string> = {
@@ -92,107 +90,45 @@ const INDUSTRY_NOTES: Record<string, string> = {
 };
 
 async function main() {
-  for (let day = 1; day <= 60; day++) {
-    const category = getCategory(day);
-    const difficulty = getDifficulty(day);
-    const title = CHALLENGE_TITLES[day] || `Day ${day} Challenge`;
-    await prisma.challenge.upsert({
-      where: { dayNumber: day },
-      create: {
-        dayNumber: day,
-        category,
-        difficulty,
-        description: `**${title}**\n\nSolve the following problem. This challenge focuses on ${category} fundamentals. Difficulty: ${difficulty}. Implement your solution and submit to verify.`,
-        industryNote: INDUSTRY_NOTES[category],
-      },
-      update: {
-        category,
-        difficulty,
-        description: `**${title}**\n\nSolve the following problem. This challenge focuses on ${category} fundamentals. Difficulty: ${difficulty}. Implement your solution and submit to verify.`,
-        industryNote: INDUSTRY_NOTES[category],
-      },
-    });
+  for (const domain of DOMAINS) {
+    const category = CATEGORIES[domain];
+    for (let day = 1; day <= 60; day++) {
+      const difficulty = getDifficulty(day);
+      const title = CHALLENGE_TITLES[day] || `Day ${day} Challenge`;
+      await prisma.challenge.upsert({
+        where: { dayNumber_domain: { dayNumber: day, domain } },
+        create: {
+          dayNumber: day,
+          domain,
+          category,
+          difficulty,
+          description: `**${title}**\n\nSolve the following problem. This challenge focuses on ${category} fundamentals. Difficulty: ${difficulty}. Implement your solution and submit to verify.`,
+          industryNote: INDUSTRY_NOTES[category],
+        },
+        update: {
+          category,
+          difficulty,
+          description: `**${title}**\n\nSolve the following problem. This challenge focuses on ${category} fundamentals. Difficulty: ${difficulty}. Implement your solution and submit to verify.`,
+          industryNote: INDUSTRY_NOTES[category],
+        },
+      });
+    }
   }
 
   const problems = [
-    {
-      title: "Two Sum",
-      description: "Given an array of integers and a target, return indices of the two numbers that add up to target.",
-      category: "Software Engineering",
-      difficulty: "Easy",
-    },
-    {
-      title: "Reverse Linked List",
-      description: "Reverse a singly linked list in-place and return the new head.",
-      category: "Software Engineering",
-      difficulty: "Easy",
-    },
-    {
-      title: "Binary Search",
-      description: "Implement binary search to find target in a sorted array. Return index or -1.",
-      category: "Software Engineering",
-      difficulty: "Easy",
-    },
-    {
-      title: "Valid Parentheses",
-      description: "Given a string of brackets, determine if the string is valid (properly closed and nested).",
-      category: "Software Engineering",
-      difficulty: "Medium",
-    },
-    {
-      title: "Maximum Subarray",
-      description: "Find the contiguous subarray with the largest sum (Kadane's algorithm).",
-      category: "Software Engineering",
-      difficulty: "Medium",
-    },
-    {
-      title: "3Sum",
-      description: "Find all unique triplets in the array that sum to zero.",
-      category: "Software Engineering",
-      difficulty: "Medium",
-    },
-    {
-      title: "Merge Intervals",
-      description: "Merge all overlapping intervals and return non-overlapping intervals.",
-      category: "Software Engineering",
-      difficulty: "Medium",
-    },
-    {
-      title: "LRU Cache",
-      description: "Design and implement an LRU (Least Recently Used) cache.",
-      category: "Software Engineering",
-      difficulty: "Hard",
-    },
-    {
-      title: "Linear Regression",
-      description: "Implement linear regression using gradient descent from scratch.",
-      category: "Machine Learning",
-      difficulty: "Medium",
-    },
-    {
-      title: "K-Nearest Neighbors",
-      description: "Implement KNN for classification with configurable k and distance metric.",
-      category: "Machine Learning",
-      difficulty: "Easy",
-    },
-    {
-      title: "Decision Tree Split",
-      description: "Implement information gain and best split selection for a decision tree.",
-      category: "Machine Learning",
-      difficulty: "Hard",
-    },
-    {
-      title: "Matrix Multiplication for Neural Nets",
-      description: "Implement batched matrix multiplication as used in neural network layers.",
-      category: "Artificial Intelligence",
-      difficulty: "Medium",
-    },
-    {
-      title: "Softmax and Cross-Entropy",
-      description: "Implement softmax and cross-entropy loss for classification.",
-      category: "Artificial Intelligence",
-      difficulty: "Medium",
-    },
+    { title: "Two Sum", description: "Given an array of integers and a target, return indices of the two numbers that add up to target.", category: "Software Engineering", difficulty: "Easy", domain: "SE" as Domain },
+    { title: "Reverse Linked List", description: "Reverse a singly linked list in-place and return the new head.", category: "Software Engineering", difficulty: "Easy", domain: "SE" as Domain },
+    { title: "Binary Search", description: "Implement binary search to find target in a sorted array. Return index or -1.", category: "Software Engineering", difficulty: "Easy", domain: "SE" as Domain },
+    { title: "Valid Parentheses", description: "Given a string of brackets, determine if the string is valid (properly closed and nested).", category: "Software Engineering", difficulty: "Medium", domain: "SE" as Domain },
+    { title: "Maximum Subarray", description: "Find the contiguous subarray with the largest sum (Kadane's algorithm).", category: "Software Engineering", difficulty: "Medium", domain: "SE" as Domain },
+    { title: "3Sum", description: "Find all unique triplets in the array that sum to zero.", category: "Software Engineering", difficulty: "Medium", domain: "SE" as Domain },
+    { title: "Merge Intervals", description: "Merge all overlapping intervals and return non-overlapping intervals.", category: "Software Engineering", difficulty: "Medium", domain: "SE" as Domain },
+    { title: "LRU Cache", description: "Design and implement an LRU (Least Recently Used) cache.", category: "Software Engineering", difficulty: "Hard", domain: "SE" as Domain },
+    { title: "Linear Regression", description: "Implement linear regression using gradient descent from scratch.", category: "Machine Learning", difficulty: "Medium", domain: "ML" as Domain },
+    { title: "K-Nearest Neighbors", description: "Implement KNN for classification with configurable k and distance metric.", category: "Machine Learning", difficulty: "Easy", domain: "ML" as Domain },
+    { title: "Decision Tree Split", description: "Implement information gain and best split selection for a decision tree.", category: "Machine Learning", difficulty: "Hard", domain: "ML" as Domain },
+    { title: "Matrix Multiplication for Neural Nets", description: "Implement batched matrix multiplication as used in neural network layers.", category: "Artificial Intelligence", difficulty: "Medium", domain: "AI" as Domain },
+    { title: "Softmax and Cross-Entropy", description: "Implement softmax and cross-entropy loss for classification.", category: "Artificial Intelligence", difficulty: "Medium", domain: "AI" as Domain },
   ];
 
   await prisma.problem.deleteMany({});

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
 import {
   Card,
@@ -13,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Lock, Check, ChevronRight } from "lucide-react";
 import { getDifficultyBgColor } from "@/lib/utils";
+import { AddChallengeButton } from "@/components/admin-add-buttons";
 
 type Challenge = {
   id: string;
@@ -52,10 +52,15 @@ export default function ChallengePage() {
 
   return (
     <div className="p-8">
-      <h1 className="mb-2 text-3xl font-bold">60-Day Challenge</h1>
-      <p className="mb-8 text-muted-foreground">
-        Complete each day to unlock the next. You are on Day {currentDay}.
-      </p>
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">60-Day Challenge</h1>
+          <p className="text-muted-foreground">
+            Complete each day to unlock the next. You are on Day {currentDay}.
+          </p>
+        </div>
+        <AddChallengeButton />
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {challenges.map((c) => (
           <Card

@@ -28,12 +28,34 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (problemId) {
+      const problem = await prisma.problem.findUnique({
+        where: { id: problemId },
+        select: { id: true, domain: true },
+      });
+      if (!problem) {
+        return NextResponse.json(
+          { error: "Problem not found" },
+          { status: 404 }
+        );
+      }
+      const problemUser = await prisma.user.findUnique({
+        where: { id: session.userId },
+        select: { selectedDomain: true },
+      });
+      if (!problemUser || problemUser.selectedDomain !== problem.domain) {
+        return NextResponse.json(
+          { error: "Problem not found" },
+          { status: 404 }
+        );
+      }
+    }
     const result = "Passed";
-    let challenge: { dayNumber: number; id: string } | null = null;
+    let challenge: { dayNumber: number; id: string; domain: "SE" | "ML" | "AI" } | null = null;
     if (challengeId) {
       challenge = await prisma.challenge.findUnique({
         where: { id: challengeId },
-        select: { dayNumber: true, id: true },
+        select: { dayNumber: true, id: true, domain: true },
       });
       if (!challenge) {
         return NextResponse.json(
@@ -43,9 +65,15 @@ export async function POST(request: Request) {
       }
       const user = await prisma.user.findUnique({
         where: { id: session.userId },
-        select: { currentDay: true, currentStreak: true, longestStreak: true },
+        select: { currentDay: true, currentStreak: true, longestStreak: true, selectedDomain: true },
       });
-      if (!user || user.currentDay < challenge.dayNumber) {
+      if (!user || user.selectedDomain !== challenge.domain) {
+        return NextResponse.json(
+          { error: "Challenge not found" },
+          { status: 404 }
+        );
+      }
+      if (user.currentDay < challenge.dayNumber) {
         return NextResponse.json(
           { error: "Challenge is locked" },
           { status: 403 }

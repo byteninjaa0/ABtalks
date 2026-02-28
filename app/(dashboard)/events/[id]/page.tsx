@@ -12,9 +12,10 @@ type Props = {
 export const dynamic = "force-dynamic";
 
 export default async function EventDetailPage({ params }: Props) {
+  const { id } = params;
   const [event, user] = await Promise.all([
     prisma.event.findUnique({
-      where: { id: params.id },
+      where: { id },
     }),
     getCurrentUser(),
   ]);
@@ -37,8 +38,8 @@ export default async function EventDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-10 md:py-12">
+    <div className="p-8">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8">
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
             ABTalks event
@@ -111,7 +112,7 @@ export default async function EventDetailPage({ params }: Props) {
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold">Register</h2>
                 {!user && (
-                  <Button variant="ghost" size="xs" asChild>
+                  <Button variant="ghost" size="sm" asChild>
                     <a href="/login">Sign in</a>
                   </Button>
                 )}
@@ -130,4 +131,3 @@ export default async function EventDetailPage({ params }: Props) {
     </div>
   );
 }
-
