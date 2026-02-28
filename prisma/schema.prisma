@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String
+  email         String       @unique
+  password      String
+  joinedAt      DateTime     @default(now())
+  currentDay    Int          @default(1)
+  currentStreak Int          @default(0)
+  longestStreak Int          @default(0)
+  submissions   Submission[]
+  role          Role         @default(USER)
+  registrations EventRegistration[]
+}
+
+model Challenge {
+  id          String       @id @default(cuid())
+  dayNumber   Int          @unique
+  category    String
+  difficulty  String
+  description String
+  industryNote String
+  submissions Submission[]
+}
+
+model Problem {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  category    String
+  difficulty  String
+  submissions Submission[]
+}
+
+model Submission {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId String?
+  challenge   Challenge? @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+  problemId   String?
+  problem     Problem?   @relation(fields: [problemId], references: [id], onDelete: SetNull)
+  code        String
+  result      String
+  createdAt   DateTime  @default(now())
+}
+
+model Event {
+  id            String               @id @default(cuid())
+  title         String
+  description   String
+  date          DateTime
+  time          String
+  location      String
+  guestName     String
+  guestBio      String
+  guestImage    String
+  outcomes      String[]
+  createdAt     DateTime             @default(now())
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  id               String   @id @default(cuid())
+  eventId          String
+  userId           String
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  email            String
+  collegeOrCompany String
+  createdAt        DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Podcast {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  guestName     String
+  guestBio      String
+  guestImage    String
+  episodeNumber Int
+  youtubeUrl    String
+  spotifyUrl    String
+  publishedAt   DateTime
+  createdAt     DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+}

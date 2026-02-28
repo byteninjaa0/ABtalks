@@ -1,0 +1,6 @@
+{
+  "/api/challenge/route": "app/api/challenge/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/(dashboard)/challenge/page": "app/(dashboard)/challenge/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
+}
