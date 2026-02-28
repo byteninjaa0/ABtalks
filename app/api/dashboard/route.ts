@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getOrCreateDomainProgress } from "@/lib/domain-progress";
 
 export async function GET() {
   const session = await getSession();
@@ -9,15 +10,13 @@ export async function GET() {
   }
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: {
-      currentDay: true,
-      currentStreak: true,
-      longestStreak: true,
-    },
+    select: { selectedDomain: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+  const progress = await getOrCreateDomainProgress(session.userId, user.selectedDomain);
+
   const [challengeSubs, recentSubs, allSubs] = await Promise.all([
     prisma.submission.findMany({
       where: { userId: session.userId, challengeId: { not: null } },
@@ -70,10 +69,10 @@ export async function GET() {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([day, count]) => ({ day, submissions: count }));
   return NextResponse.json({
-    currentDay: user.currentDay,
+    currentDay: progress.currentDay,
     totalProblemsSolved: totalSolved,
-    currentStreak: user.currentStreak,
-    longestStreak: user.longestStreak,
+    currentStreak: progress.currentStreak,
+    longestStreak: progress.longestStreak,
     completionPercentage,
     recentActivity: recentSubs.map((s) => ({
       id: s.id,

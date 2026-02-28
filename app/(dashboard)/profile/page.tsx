@@ -14,10 +14,11 @@ type User = {
   id: string;
   name: string;
   email: string;
-  currentDay: number;
-  currentStreak: number;
-  longestStreak: number;
+  selectedDomain?: string;
   joinedAt: string;
+  currentDay?: number;
+  currentStreak?: number;
+  longestStreak?: number;
 };
 
 export default function ProfilePage() {
@@ -71,16 +72,20 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Current day</span>
-                <span className="font-medium">Day {user.currentDay}/60</span>
+                <span className="text-muted-foreground">Primary domain</span>
+                <span className="font-medium">{user.selectedDomain ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Current day ({user.selectedDomain ?? "primary"})</span>
+                <span className="font-medium">Day {user.currentDay ?? 1}/60</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Current streak</span>
-                <span className="font-medium">{user.currentStreak} days</span>
+                <span className="font-medium">{user.currentStreak ?? 0} days</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Longest streak</span>
-                <span className="font-medium">{user.longestStreak} days</span>
+                <span className="font-medium">{user.longestStreak ?? 0} days</span>
               </div>
             </CardContent>
           </Card>

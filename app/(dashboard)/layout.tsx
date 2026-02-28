@@ -17,9 +17,6 @@ export default async function DashboardLayout({
         name: user.name,
         email: user.email,
         selectedDomain: user.selectedDomain,
-        currentDay: user.currentDay,
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak,
         joinedAt: user.joinedAt.toISOString(),
         role: user.role,
       }

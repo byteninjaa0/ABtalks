@@ -10,9 +10,6 @@ export type User = {
   name: string;
   email: string;
   selectedDomain: Domain;
-  currentDay: number;
-  currentStreak: number;
-  longestStreak: number;
   joinedAt: string;
   role: UserRole;
 } | null;

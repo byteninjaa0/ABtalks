@@ -43,9 +43,7 @@ export async function POST(request: Request) {
         id: user.id,
         name: user.name,
         email: user.email,
-        currentDay: user.currentDay,
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak,
+        selectedDomain: user.selectedDomain,
         role: (user as any).role ?? "USER",
       },
     });

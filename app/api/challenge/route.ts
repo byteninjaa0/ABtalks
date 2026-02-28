@@ -1,43 +1,75 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getOrCreateDomainProgress } from "@/lib/domain-progress";
 
-export async function GET() {
+const VALID_DOMAINS = ["SE", "ML", "AI"] as const;
+
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { searchParams } = new URL(request.url);
+  const domainParam = searchParams.get("domain");
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { currentDay: true, selectedDomain: true },
+    select: { selectedDomain: true },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  const challenges = await prisma.challenge.findMany({
-    where: { domain: user.selectedDomain },
-    orderBy: { dayNumber: "asc" },
-  });
+  const domain =
+    domainParam && VALID_DOMAINS.includes(domainParam as (typeof VALID_DOMAINS)[number])
+      ? (domainParam as (typeof VALID_DOMAINS)[number])
+      : user.selectedDomain;
+
+  const [progress, challenges, challengeSubs] = await Promise.all([
+    getOrCreateDomainProgress(session.userId, domain),
+    prisma.challenge.findMany({
+      where: { domain },
+      orderBy: { dayNumber: "asc" },
+    }),
+    prisma.submission.findMany({
+      where: {
+        userId: session.userId,
+        challengeId: { not: null },
+        challenge: { domain },
+      },
+      select: { challenge: { select: { dayNumber: true } } },
+    }),
+  ]);
+
   const solvedDayNumbers = new Set(
-    (
-      await prisma.submission.findMany({
-        where: { userId: session.userId, challengeId: { not: null } },
-        select: { challenge: { select: { dayNumber: true } } },
-      })
-    )
+    challengeSubs
       .filter((s) => s.challenge)
       .map((s) => (s.challenge as { dayNumber: number }).dayNumber)
   );
-  const maxUnlocked = user.currentDay;
-  const list = challenges.map((c) => ({
-    id: c.id,
-    dayNumber: c.dayNumber,
-    category: c.category,
-    difficulty: c.difficulty,
-    description: c.description,
-    industryNote: c.industryNote,
-    solved: solvedDayNumbers.has(c.dayNumber),
-    unlocked: c.dayNumber <= maxUnlocked,
-  }));
-  return NextResponse.json({ challenges: list, currentDay: user.currentDay });
+  const challengeByDay = new Map(challenges.map((c) => [c.dayNumber, c]));
+  const maxUnlocked = progress.currentDay;
+
+  const list = Array.from({ length: 60 }, (_, i) => {
+    const dayNumber = i + 1;
+    const challenge = challengeByDay.get(dayNumber);
+    return {
+      id: challenge?.id ?? null,
+      dayNumber,
+      category: challenge?.category ?? null,
+      difficulty: challenge?.difficulty ?? null,
+      description: challenge?.description ?? null,
+      industryNote: challenge?.industryNote ?? null,
+      solved: solvedDayNumbers.has(dayNumber),
+      unlocked: dayNumber <= maxUnlocked,
+      configured: !!challenge,
+    };
+  });
+
+  return NextResponse.json({
+    challenges: list,
+    domain,
+    currentDay: progress.currentDay,
+    currentStreak: progress.currentStreak,
+    longestStreak: progress.longestStreak,
+    defaultDomain: user.selectedDomain,
+  });
 }

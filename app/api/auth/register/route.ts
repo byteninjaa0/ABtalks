@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, createToken, setSession } from "@/lib/auth";
+import { ensureDomainProgressForUser } from "@/lib/domain-progress";
 import { registerSchema } from "@/lib/validations/auth";
 
 export async function POST(request: Request) {
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
         selectedDomain,
       },
     });
+    await ensureDomainProgressForUser(user.id);
     const token = createToken({
       userId: user.id,
       email: user.email,
@@ -43,9 +45,7 @@ export async function POST(request: Request) {
         id: user.id,
         name: user.name,
         email: user.email,
-        currentDay: user.currentDay,
-        currentStreak: user.currentStreak,
-        longestStreak: user.longestStreak,
+        selectedDomain: user.selectedDomain,
         role: (user as any).role ?? "USER",
       },
     });

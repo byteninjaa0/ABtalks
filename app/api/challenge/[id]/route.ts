@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getOrCreateDomainProgress } from "@/lib/domain-progress";
 
 export async function GET(
   _request: Request,
@@ -17,17 +18,8 @@ export async function GET(
   if (!challenge) {
     return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
   }
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    select: { currentDay: true, selectedDomain: true },
-  });
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-  if (challenge.domain !== user.selectedDomain) {
-    return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
-  }
-  const unlocked = challenge.dayNumber <= user.currentDay;
+  const progress = await getOrCreateDomainProgress(session.userId, challenge.domain);
+  const unlocked = challenge.dayNumber <= progress.currentDay;
   const solved = await prisma.submission.findFirst({
     where: {
       userId: session.userId,

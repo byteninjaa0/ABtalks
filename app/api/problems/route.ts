@@ -17,7 +17,13 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const difficulty = searchParams.get("difficulty");
   const category = searchParams.get("category");
-  const where: { difficulty?: string; category?: string; domain: "SE" | "ML" | "AI" } = { domain: user.selectedDomain };
+  const domainParam = searchParams.get("domain");
+  const validDomains = ["SE", "ML", "AI"] as const;
+  const domain =
+    domainParam && validDomains.includes(domainParam as (typeof validDomains)[number])
+      ? (domainParam as (typeof validDomains)[number])
+      : user.selectedDomain;
+  const where: { difficulty?: string; category?: string; domain: "SE" | "ML" | "AI" } = { domain };
   if (difficulty) where.difficulty = difficulty;
   if (category) where.category = category;
   const problems = await prisma.problem.findMany({

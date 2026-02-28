@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 type Challenge = {
   id: string;
@@ -29,9 +31,11 @@ const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
 export default function AdminChallengesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterDomain, setFilterDomain] = useState("SE");
   const [dayNumber, setDayNumber] = useState("");
   const [domain, setDomain] = useState("SE");
   const [category, setCategory] = useState("");
@@ -39,6 +43,15 @@ export default function AdminChallengesPage() {
   const [description, setDescription] = useState("");
   const [industryNote, setIndustryNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const edit = searchParams.get("edit");
+    const day = searchParams.get("day");
+    const dom = searchParams.get("domain");
+    if (day) setDayNumber(day);
+    if (dom && DOMAINS.includes(dom)) setDomain(dom);
+    if (dom && DOMAINS.includes(dom)) setFilterDomain(dom);
+  }, [searchParams]);
 
   useEffect(() => {
     fetch("/api/admin/challenges")
@@ -50,6 +63,9 @@ export default function AdminChallengesPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const challengesByDomain = challenges.filter((c) => c.domain === filterDomain);
+  const challengeByDay = new Map(challengesByDomain.map((c) => [c.dayNumber, c]));
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +96,6 @@ export default function AdminChallengesPage() {
       setIndustryNote("");
       setCategory("");
       setDifficulty("Easy");
-      setDomain("SE");
       setChallenges((prev) => [...prev, data.challenge]);
       router.refresh();
     } catch (e) {
@@ -105,134 +120,176 @@ export default function AdminChallengesPage() {
 
   return (
     <div className="min-h-screen bg-background p-8">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Admin – 60-Day Challenges</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Add or replace challenges for a specific day and domain.
+            View, add, edit or delete challenges per domain. Each domain has its own Day 1–60.
           </p>
         </div>
+
+        {/* Domain filter */}
+        <div className="mb-6">
+          <Label className="mb-2 block text-sm text-muted-foreground">Filter by domain</Label>
+          <div className="flex gap-2">
+            {DOMAINS.map((d) => (
+              <Button
+                key={d}
+                variant={filterDomain === d ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterDomain(d)}
+              >
+                {d}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         {error && (
           <p className="mb-4 text-sm text-destructive">{error}</p>
         )}
-        <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add challenge</CardTitle>
-              <CardDescription>Day 1–60, one challenge per (day, domain).</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreate} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="dayNumber">Day (1–60)</Label>
-                    <Input
-                      id="dayNumber"
-                      type="number"
-                      min={1}
-                      max={60}
-                      value={dayNumber}
-                      onChange={(e) => setDayNumber(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="domain">Domain</Label>
-                    <select
-                      id="domain"
-                      value={domain}
-                      onChange={(e) => setDomain(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+
+        {/* 60-day grid for selected domain */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Domain: {filterDomain} – Day 1–60</CardTitle>
+            <CardDescription>Edit or delete a challenge; add one for empty days.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : (
+              <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
+                {Array.from({ length: 60 }, (_, i) => {
+                  const day = i + 1;
+                  const c = challengeByDay.get(day);
+                  return (
+                    <div
+                      key={day}
+                      className="flex flex-col items-center justify-between rounded border p-2 text-center"
                     >
-                      {DOMAINS.map((d) => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Input
-                      id="category"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="difficulty">Difficulty</Label>
-                    <select
-                      id="difficulty"
-                      value={difficulty}
-                      onChange={(e) => setDifficulty(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    >
-                      {DIFFICULTIES.map((d) => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                      <span className="text-xs font-medium">Day {day}</span>
+                      {c ? (
+                        <div className="mt-1 flex flex-col gap-1">
+                          <span className="truncate text-xs text-muted-foreground" title={c.category}>
+                            {c.difficulty}
+                          </span>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                              <Link href={`/admin/challenges?edit=${c.id}`}>
+                                <Pencil className="h-3 w-3" aria-label="Edit" />
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive"
+                              onClick={() => handleDelete(c.id)}
+                              aria-label="Delete"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button variant="outline" size="sm" className="mt-1 h-7 w-7 p-0" asChild>
+                          <Link href={`/admin/challenges?day=${day}&domain=${filterDomain}`}>
+                            <Plus className="h-3 w-3" aria-label="Add" />
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Add challenge form */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Add challenge</CardTitle>
+            <CardDescription>Day 1–60, one challenge per (day, domain).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                  <Label htmlFor="dayNumber">Day (1–60)</Label>
+                  <Input
+                    id="dayNumber"
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={dayNumber}
+                    onChange={(e) => setDayNumber(e.target.value)}
                     required
-                    rows={4}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="industryNote">Industry note (optional)</Label>
-                  <Textarea
-                    id="industryNote"
-                    value={industryNote}
-                    onChange={(e) => setIndustryNote(e.target.value)}
-                    rows={2}
+                  <Label htmlFor="domain">Domain</Label>
+                  <select
+                    id="domain"
+                    value={domain}
+                    onChange={(e) => setDomain(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {DOMAINS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    required
                   />
                 </div>
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Creating…" : "Add challenge"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Existing challenges</CardTitle>
-              <CardDescription>By domain and day.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : challenges.length === 0 ? (
-                <p className="text-sm text-muted-foreground">None yet.</p>
-              ) : (
-                <ul className="max-h-[400px] space-y-2 overflow-y-auto">
-                  {challenges.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex items-center justify-between gap-2 rounded border px-3 py-2 text-sm"
-                    >
-                      <span>
-                        Day {c.dayNumber} ({c.domain})
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(c.id)}
-                      >
-                        Delete
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                <div className="space-y-2">
+                  <Label htmlFor="difficulty">Difficulty</Label>
+                  <select
+                    id="difficulty"
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    {DIFFICULTIES.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="industryNote">Industry note (optional)</Label>
+                <Textarea
+                  id="industryNote"
+                  value={industryNote}
+                  onChange={(e) => setIndustryNote(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Creating…" : "Add challenge"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

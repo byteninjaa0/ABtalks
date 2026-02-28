@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getOrCreateDomainProgress } from "@/lib/domain-progress";
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -39,16 +40,6 @@ export async function POST(request: Request) {
           { status: 404 }
         );
       }
-      const problemUser = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: { selectedDomain: true },
-      });
-      if (!problemUser || problemUser.selectedDomain !== problem.domain) {
-        return NextResponse.json(
-          { error: "Problem not found" },
-          { status: 404 }
-        );
-      }
     }
     const result = "Passed";
     let challenge: { dayNumber: number; id: string; domain: "SE" | "ML" | "AI" } | null = null;
@@ -63,17 +54,8 @@ export async function POST(request: Request) {
           { status: 404 }
         );
       }
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: { currentDay: true, currentStreak: true, longestStreak: true, selectedDomain: true },
-      });
-      if (!user || user.selectedDomain !== challenge.domain) {
-        return NextResponse.json(
-          { error: "Challenge not found" },
-          { status: 404 }
-        );
-      }
-      if (user.currentDay < challenge.dayNumber) {
+      const progress = await getOrCreateDomainProgress(session.userId, challenge.domain);
+      if (progress.currentDay < challenge.dayNumber) {
         return NextResponse.json(
           { error: "Challenge is locked" },
           { status: 403 }
@@ -90,15 +72,7 @@ export async function POST(request: Request) {
       },
     });
     if (challenge) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: {
-          currentDay: true,
-          currentStreak: true,
-          longestStreak: true,
-        },
-      });
-      if (!user) return NextResponse.json({ submission, result });
+      const progress = await getOrCreateDomainProgress(session.userId, challenge.domain);
       const now = new Date();
       const lastSubmission = await prisma.submission.findFirst({
         where: {
@@ -113,11 +87,12 @@ export async function POST(request: Request) {
       }
       const nextDay = challenge.dayNumber + 1;
       const newCurrentDay =
-        user.currentDay < nextDay ? nextDay : user.currentDay;
+        progress.currentDay < nextDay ? nextDay : progress.currentDay;
       const lastOtherSubmission = await prisma.submission.findFirst({
         where: {
           userId: session.userId,
           challengeId: { not: null },
+          challenge: { domain: challenge.domain },
           id: { not: submission.id },
         },
         orderBy: { createdAt: "desc" },
@@ -131,13 +106,13 @@ export async function POST(request: Request) {
         : null;
       let newStreak: number;
       if (!lastDayStr) newStreak = 1;
-      else if (lastDayStr === yesterdayStr) newStreak = user.currentStreak + 1;
-      else if (lastDayStr === todayStr) newStreak = user.currentStreak;
+      else if (lastDayStr === yesterdayStr) newStreak = progress.currentStreak + 1;
+      else if (lastDayStr === todayStr) newStreak = progress.currentStreak;
       else newStreak = 1;
       const newLongest =
-        newStreak > user.longestStreak ? newStreak : user.longestStreak;
-      await prisma.user.update({
-        where: { id: session.userId },
+        newStreak > progress.longestStreak ? newStreak : progress.longestStreak;
+      await prisma.domainProgress.update({
+        where: { userId_domain: { userId: session.userId, domain: challenge.domain } },
         data: {
           currentDay: newCurrentDay,
           currentStreak: newStreak,

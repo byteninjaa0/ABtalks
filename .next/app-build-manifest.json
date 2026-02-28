@@ -5,10 +5,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/global-error.js"
     ],
-    "/(auth)/register/page": [
+    "/(auth)/login/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/register/page.js"
+      "static/chunks/app/(auth)/login/page.js"
     ],
     "/(auth)/layout": [
       "static/chunks/webpack.js",
@@ -41,15 +41,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/challenge/page.js"
     ],
+    "/admin/challenges/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/challenges/page.js"
+    ],
+    "/admin/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/admin/layout.js"
+    ],
     "/(dashboard)/problems/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/problems/page.js"
-    ],
-    "/(dashboard)/challenge/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/challenge/[id]/page.js"
     ],
     "/(dashboard)/events/page": [
       "static/chunks/webpack.js",
@@ -61,30 +66,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/podcasts/page.js"
     ],
-    "/(auth)/login/page": [
+    "/(dashboard)/events/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/login/page.js"
+      "static/chunks/app/(dashboard)/events/[id]/page.js"
     ],
-    "/admin/problems/page": [
+    "/admin/events/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/problems/page.js"
-    ],
-    "/admin/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/layout.js"
-    ],
-    "/admin/challenges/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/challenges/page.js"
-    ],
-    "/admin/podcasts/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/admin/podcasts/page.js"
+      "static/chunks/app/admin/events/page.js"
     ],
     "/page": [
       "static/chunks/webpack.js",
