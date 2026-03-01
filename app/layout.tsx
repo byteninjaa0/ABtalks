@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ABTalks – 60 Days Industry Coding Challenge",
-  description: "Structured 60-day coding challenge for Software Engineering, ML & AI roles",
+  title: "ABTalks – From Learner to Industry-Ready",
+  description:
+    "A community of like-minded developers. Structured 60-day challenge, webinars, podcasts, and mentorship to prepare you for real industry roles in Software Engineering, ML & AI.",
+  openGraph: {
+    title: "ABTalks – From Learner to Industry-Ready",
+    description:
+      "A focused community for ambitious developers preparing for real-world roles through structured challenges, mentorship, and live sessions.",
+  },
 };
 
 export default function RootLayout({
@@ -12,8 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-background font-sans">{children}</body>
+    <html lang="en" className="dark scroll-smooth">
+      <body className={`min-h-screen bg-background font-sans antialiased ${GeistSans.className}`}>
+        {children}
+      </body>
     </html>
   );
 }

@@ -52,7 +52,7 @@ export default function RegisterPage() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Create an account</CardTitle>
-        <CardDescription>Join ABTalks 60-day coding challenge</CardDescription>
+        <CardDescription>Join ABTalks Commuinty</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
