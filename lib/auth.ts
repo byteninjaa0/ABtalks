@@ -1,20 +1,36 @@
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db";
 
-const JWT_SECRET = process.env.JWT_SECRET || "default-secret-change-me";
+type JwtExpiresIn = NonNullable<SignOptions["expiresIn"]>;
+
 const COOKIE_NAME = "abtalks-token";
-// Accept either numeric seconds ("3600") or jsonwebtoken duration string ("1h", "7d").
-const JWT_EXPIRES_IN = (() => {
+const MAX_AGE = 60 * 60; // 1 hour cookie; refresh token flow can extend session
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET environment variable is required. Set a strong, non-empty secret before signing or verifying tokens.",
+    );
+  }
+  return secret;
+}
+
+function isMsStyleDuration(value: string): value is Extract<JwtExpiresIn, string> {
+  return /^\d+(ms|s|m|h|d|w|y)$/i.test(value);
+}
+
+function resolveJwtExpiresInFromEnv(): JwtExpiresIn {
   const value = process.env.JWT_EXPIRY?.trim();
   if (!value) return "1h";
   if (/^\d+$/.test(value)) return Number(value);
-  // jsonwebtoken/ms-style short durations supported in production env (e.g. 15m, 1h, 7d)
-  if (/^\d+(ms|s|m|h|d|w|y)$/i.test(value)) return value;
+  if (isMsStyleDuration(value)) return value;
   return "1h";
-})();
-const MAX_AGE = 60 * 60; // 1 hour cookie; refresh token flow can extend session
+}
+
+const JWT_EXPIRES_IN: JwtExpiresIn = resolveJwtExpiresInFromEnv();
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -33,13 +49,26 @@ type JwtPayload = {
   role: "USER" | "ADMIN";
 };
 
+export type SignJwtOptions = {
+  expiresIn?: JwtExpiresIn;
+};
+
+/**
+ * Signs a JWT with a validated secret and `expiresIn` compatible with jsonwebtoken's `SignOptions`.
+ */
+export function signToken(payload: JwtPayload, options?: SignJwtOptions): string {
+  const secret = getJwtSecret();
+  const expiresIn: JwtExpiresIn = options?.expiresIn ?? JWT_EXPIRES_IN;
+  return jwt.sign(payload, secret, { expiresIn });
+}
+
 export function createToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return signToken(payload);
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as JwtPayload;
     return {
       userId: decoded.userId,
       email: decoded.email,
