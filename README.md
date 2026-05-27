@@ -1,4 +1,4 @@
-# ABTalks – 60 Days Industry Coding Challenge
+# ABTalks – Website
 
 Full-stack platform for a structured 60-day coding challenge (Software Engineering, Machine Learning, AI).
 
